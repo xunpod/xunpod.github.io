@@ -1,0 +1,743 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=light>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Xunpod">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="基于Python的豆瓣影评数据爬取及分析一、前言豆瓣用户每天都在对“看过”的电影进行“很差”到“力荐”的评价，豆瓣根据每部影片看过的人数以及该影片所得的评价等综合数据，通过算法分析产生豆瓣电影 Top 250。对于这个榜单，我产生了一些疑问。比如，我喜欢的某个导演有多少部电影进入榜单？榜单中哪一类型的电影最多？电影的排名与评分有什么样的关系？为了回答这些问题，我将构建爬虫程序抓取豆瓣电影Top25">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Python的豆瓣影评数据爬取及分析">
+<meta property="og:url" content="https://blog.xunpod.com/2019/10/26/%E5%9F%BA%E4%BA%8EPython%E7%9A%84%E8%B1%86%E7%93%A3%E5%BD%B1%E8%AF%84%E6%95%B0%E6%8D%AE%E7%88%AC%E5%8F%96%E5%8F%8A%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Xunpod&#39;s Blog">
+<meta property="og:description" content="基于Python的豆瓣影评数据爬取及分析一、前言豆瓣用户每天都在对“看过”的电影进行“很差”到“力荐”的评价，豆瓣根据每部影片看过的人数以及该影片所得的评价等综合数据，通过算法分析产生豆瓣电影 Top 250。对于这个榜单，我产生了一些疑问。比如，我喜欢的某个导演有多少部电影进入榜单？榜单中哪一类型的电影最多？电影的排名与评分有什么样的关系？为了回答这些问题，我将构建爬虫程序抓取豆瓣电影Top25">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_area.png">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_movie_area.png">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_type.png">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_movie_type.png">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_director.png">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_director.png">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_score_number.png">
+<meta property="og:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_review_number.png">
+<meta property="article:published_time" content="2019-10-26T14:39:21.000Z">
+<meta property="article:modified_time" content="2022-07-28T13:25:39.169Z">
+<meta property="article:author" content="Xunpod">
+<meta property="article:tag" content="Python 数据分析 爬虫">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_area.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>基于Python的豆瓣影评数据爬取及分析 - Xunpod&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.xunpod.com","root":"/","version":"1.9.2","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":["home"]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Xunpod&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">基于Python的豆瓣影评数据爬取及分析</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        Xunpod
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2019-10-26 22:39" pubdate>
+          2019年10月26日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          11k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          94 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">基于Python的豆瓣影评数据爬取及分析</h1>
+            
+              <p class="note note-info">
+                
+                  
+                    本文最后更新于：2022年7月28日 晚上
+                  
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="基于Python的豆瓣影评数据爬取及分析"><a href="#基于Python的豆瓣影评数据爬取及分析" class="headerlink" title="基于Python的豆瓣影评数据爬取及分析"></a><center>基于Python的豆瓣影评数据爬取及分析</h1><h2 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h2><p>豆瓣用户每天都在对“看过”的电影进行“很差”到“力荐”的评价，豆瓣根据每部影片看过的人数以及该影片所得的评价等综合数据，通过算法分析产生豆瓣电影 Top 250。对于这个榜单，我产生了一些疑问。比如，我喜欢的某个导演有多少部电影进入榜单？榜单中哪一类型的电影最多？电影的排名与评分有什么样的关系？为了回答这些问题，我将构建爬虫程序抓取豆瓣电影Top250影评信息，并进行简单的数据分析。</p>
+<h2 id="二、数据爬取"><a href="#二、数据爬取" class="headerlink" title="二、数据爬取"></a>二、数据爬取</h2><h3 id="1-数据抓取"><a href="#1-数据抓取" class="headerlink" title="1. 数据抓取"></a>1. 数据抓取</h3><p>观察豆瓣电影Top250任意一页URL地址的格式。可以看到第一页URL地址为“<a target="_blank" rel="noopener" href="https://movie.douban.com/top250?start=0&amp;filter=">https://movie.douban.com/top250?start=0&amp;filter=</a> ”，第二页的URL地址为“<a target="_blank" rel="noopener" href="https://movie.douban.com/top250?start=25&amp;filter=">https://movie.douban.com/top250?start=25&amp;filter=</a> ”，并且每一页都展示25条豆瓣影评数据。</p>
+<p>分析这些URL地址：</p>
+<pre><code class="hljs">http://代表资源传输使用https协议
+movie.douban.com 是豆瓣的二级域名，指向豆瓣的服务器。
+/top250 是服务器的某个资源，即豆瓣电影Top250的地址定位符。
+start=25&amp;filter=  是URL的两个参数，分别代表从多少条记录开始展示和过滤条件。
+</code></pre>
+<p>将URL划分为两部分：</p>
+<pre><code class="hljs">基础部分：http://movie.douban.com/top250
+参数部分：?start=  &amp;filter
+</code></pre>
+<p>​<br>接下来使用<strong>urlib</strong>模块抓取页面内容。</p>
+<p>定义一个类<strong>MovieTop</strong>，在类中定义一个初始化方法和一个获取页面方法。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">MovieTop</span>(<span class="hljs-title class_ inherited__">object</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">main</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;开始从豆瓣电影抓取数据.......&#x27;</span>)<br>        self.get_movie_info()<br></code></pre></td></tr></table></figure>
+
+<p>将一些基本信息的参数初始化放在类的初始化中，即<strong>init</strong>方法。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>    self.start = <span class="hljs-number">0</span><br>    self.param = <span class="hljs-string">&#x27;&amp;filter&#x27;</span><br>    self.headers = &#123;<span class="hljs-string">&quot;User-Agent&quot;</span>: <span class="hljs-string">&quot;Mozilla/5.0 (Windows NT 6.1; WOW64) &quot;</span><br>                        &#125;<br>    self.movieList = []<br></code></pre></td></tr></table></figure>
+
+<p>使用<strong>re</strong>模块中的<strong>compile</strong>函数解析爬取到的HTML文本，从而得到所需要的数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python">pattern = re.<span class="hljs-built_in">compile</span>(<span class="hljs-string">u&#x27;&lt;div.*?class=&quot;item&quot;&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;pic&quot;&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;em.*?class=&quot;&quot;&gt;(.*?)&lt;/em&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;info&quot;&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;title&quot;&gt;(.*?)&lt;/span&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;other&quot;&gt;(.*?)&lt;/span&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;bd&quot;&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;p.*?class=&quot;&quot;&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;导演:\s(.*?)\s.*?&lt;br&gt;&#x27;</span><br>            + <span class="hljs-string">u&#x27;(.*?)&amp;nbsp;/&amp;nbsp;&#x27;</span><br>            + <span class="hljs-string">u&#x27;(.*?)&amp;nbsp;/&amp;nbsp;(.*?)&lt;/p&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;star&quot;&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;rating_num&quot;.*?property=&quot;v:average&quot;&gt;&#x27;</span><br>            + <span class="hljs-string">u&#x27;(.*?)&lt;/span&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;span&gt;(.*?)人评价&lt;/span&gt;.*?&#x27;</span><br>            + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;inq&quot;&gt;(.*?)&lt;/span&gt;&#x27;</span>, re.S)<br></code></pre></td></tr></table></figure>
+
+<p>另外，获取页面信息时，需要知道从第几条记录开始查找和每次查找多少条记录。在这个方法中需要一个循环，通过循环抓取需要的记录。构建基础代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_page</span>(<span class="hljs-params">self</span>):<br>    <span class="hljs-keyword">try</span>:<br>        url = <span class="hljs-string">&#x27;https://movie.douban.com/top250?start=&#x27;</span> + <span class="hljs-built_in">str</span>(self.start) + <span class="hljs-string">&#x27;&amp;filter=&#x27;</span><br>        req = request.Request(url, headers=self.headers)<br>        response = request.urlopen(req)<br>        page = response.read().decode(<span class="hljs-string">&#x27;utf-8&#x27;</span>)<br>        page_num = (self.start + <span class="hljs-number">25</span>) // <span class="hljs-number">25</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;正在抓取第&#x27;</span> + <span class="hljs-built_in">str</span>(page_num) + <span class="hljs-string">&#x27;页数据...&#x27;</span>)<br>        self.start += <span class="hljs-number">25</span><br>        <span class="hljs-keyword">return</span> page<br>    <span class="hljs-keyword">except</span> request.URLError <span class="hljs-keyword">as</span> e:<br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(e, <span class="hljs-string">&#x27;reason&#x27;</span>):<br>           <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;获取失败，失败原因：&#x27;</span>, e.reason)<br><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_movie_info</span>(<span class="hljs-params">self</span>):<br>    pattern = re.<span class="hljs-built_in">compile</span>(<span class="hljs-string">u&#x27;&lt;div.*?class=&quot;item&quot;&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;pic&quot;&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;em.*?class=&quot;&quot;&gt;(.*?)&lt;/em&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;info&quot;&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;title&quot;&gt;(.*?)&lt;/span&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;other&quot;&gt;(.*?)&lt;/span&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;bd&quot;&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;p.*?class=&quot;&quot;&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;导演:\s(.*?)\s.*?&lt;br&gt;&#x27;</span><br>                  + <span class="hljs-string">u&#x27;(.*?)&amp;nbsp;/&amp;nbsp;&#x27;</span><br>                  + <span class="hljs-string">u&#x27;(.*?)&amp;nbsp;/&amp;nbsp;(.*?)&lt;/p&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;div.*?class=&quot;star&quot;&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;rating_num&quot;.*?property=&quot;v:average&quot;&gt;&#x27;</span><br>                  + <span class="hljs-string">u&#x27;(.*?)&lt;/span&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;span&gt;(.*?)人评价&lt;/span&gt;.*?&#x27;</span><br>                  + <span class="hljs-string">u&#x27;&lt;span.*?class=&quot;inq&quot;&gt;(.*?)&lt;/span&gt;&#x27;</span>, re.S)<br>    <span class="hljs-keyword">while</span> self.start &lt;= <span class="hljs-number">225</span>:<br>        page = self.get_page()<br>        movies = re.findall(pattern, page)<br>        <span class="hljs-keyword">for</span> movie <span class="hljs-keyword">in</span> movies:<br>            self.movieList.append([movie[<span class="hljs-number">0</span>],<br>                                    movie[<span class="hljs-number">1</span>],<br>                                    movie[<span class="hljs-number">2</span>].lstrip(<span class="hljs-string">&#x27;&amp;nbsp;/&amp;nbsp;&#x27;</span>),<br>                                    movie[<span class="hljs-number">3</span>],<br>                                    movie[<span class="hljs-number">4</span>].lstrip(),<br>                                    movie[<span class="hljs-number">5</span>],<br>                                    movie[<span class="hljs-number">6</span>].rstrip(),<br>                                    movie[<span class="hljs-number">7</span>],<br>                                    movie[<span class="hljs-number">8</span>],<br>                                    movie[<span class="hljs-number">9</span>]])<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-数据存储"><a href="#2-数据存储" class="headerlink" title="2. 数据存储"></a>2. 数据存储</h3><h4 id="2-1-写入csv文件"><a href="#2-1-写入csv文件" class="headerlink" title="2.1 写入csv文件"></a>2.1 写入csv文件</h4><p>在<strong>MovieTop</strong>类中，定义<strong>write_into_csv</strong>方法，使用<strong>csv</strong>模块，将爬取到的数据写入到文件douban_top250.csv中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">write_into_csv</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;开始写入.csv文件...&#x27;</span>)<br>        write_to_csv = <span class="hljs-built_in">open</span>(<span class="hljs-string">&#x27;douban_top250.csv&#x27;</span>, <span class="hljs-string">&#x27;w&#x27;</span>, newline=<span class="hljs-string">&#x27;&#x27;</span>, encoding=<span class="hljs-string">&#x27;utf-8-sig&#x27;</span>)<br>        csv_top=csv.writer(write_to_csv)<br>        <span class="hljs-keyword">try</span>:<br>            csv_top.writerow([<span class="hljs-string">&#x27;电影排名&#x27;</span>,<span class="hljs-string">&#x27;电影名称&#x27;</span>,<span class="hljs-string">&#x27;电影别名&#x27;</span>,<span class="hljs-string">&#x27;导演&#x27;</span>,<span class="hljs-string">&#x27;上映年份&#x27;</span>,<span class="hljs-string">&#x27;制作国家/地区&#x27;</span>,<span class="hljs-string">&#x27;电影类别&#x27;</span>,<span class="hljs-string">&#x27;评分&#x27;</span>,<span class="hljs-string">&#x27;参评人数&#x27;</span>,<span class="hljs-string">&#x27;简短影评&#x27;</span>])<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;e&#x27;</span>)<br>        write_csv = csv.writer(write_to_csv)<br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-keyword">for</span> movie <span class="hljs-keyword">in</span> self.movieList:<br>                write_csv.writerow([<br>                    movie[<span class="hljs-number">0</span>],<br>                    movie[<span class="hljs-number">1</span>],<br>                    movie[<span class="hljs-number">2</span>],<br>                    movie[<span class="hljs-number">3</span>],<br>                    movie[<span class="hljs-number">4</span>],<br>                    movie[<span class="hljs-number">5</span>],<br>                    movie[<span class="hljs-number">6</span>],<br>                    movie[<span class="hljs-number">7</span>],<br>                    movie[<span class="hljs-number">8</span>],<br>                    movie[<span class="hljs-number">9</span>]<br>                ])<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;成功写入.csv文件&#x27;</span>)<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            <span class="hljs-built_in">print</span>(e)<br>        <span class="hljs-keyword">finally</span>:<br>            write_into_csv.close()<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-2-插入数据库"><a href="#2-2-插入数据库" class="headerlink" title="2.2 插入数据库"></a>2.2 插入数据库</h4><p>连接MySQL数据库，并运行此SQL脚本，即可生成表<strong>douban_top250</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs mysql">CREATE TABLE douban_top250(<br>    ID int PRIMARY KEY AUTO_INCREMENT,<br>    rankey int,<br>    name varchar(50),<br>    alias varchar(100),<br>    director varchar(50),<br>    showYear varchar(50),<br>    makeCountry varchar(50),<br>    movieType varchar(50),<br>    movieScore float,<br>    scoreNum int,<br>    shortFilm varchar(255)<br>)ENGINE=InnoDB DEFAULT CHARSET=utf8;<br></code></pre></td></tr></table></figure>
+
+<p>定义<strong>insert_into_mysql</strong>方法，使用<strong>pymysql</strong>模块，将爬取到的数据上传到MySQL数据库中，实现数据的持久化。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">insert_into_mysql</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;连接数据库...&#x27;</span>)<br>        db = pymysql.connect(host=<span class="hljs-string">&#x27;&#x27;</span>, port=, user=<span class="hljs-string">&#x27;&#x27;</span>, passwd=<span class="hljs-string">&#x27;&#x27;</span>, db=<span class="hljs-string">&#x27;douban_top250&#x27;</span>,<br>                             charset=<span class="hljs-string">&#x27;utf8&#x27;</span>)<br>        cursor = db.cursor()<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;数据库连接成功...\n开始上传数据...&#x27;</span>)<br>        insertStr = <span class="hljs-string">&quot;INSERT INTO douban_top250(rankey, name, alias, director,&quot;</span> \<br>                    <span class="hljs-string">&quot;showYear, makeCountry, movieType, movieScore, scoreNum, shortFilm)&quot;</span> \<br>                    <span class="hljs-string">&quot;VALUES (%d, &#x27;%s&#x27;, &#x27;%s&#x27;, &#x27;%s&#x27;, &#x27;%s&#x27;, &#x27;%s&#x27;, &#x27;%s&#x27;, %f, %d, &#x27;%s&#x27;)&quot;</span><br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-keyword">for</span> movie <span class="hljs-keyword">in</span> self.movieList:<br>                insertSQL = insertStr % (<span class="hljs-built_in">int</span>(movie[<span class="hljs-number">0</span>]), <span class="hljs-built_in">str</span>(movie[<span class="hljs-number">1</span>]), <span class="hljs-built_in">str</span>(movie[<span class="hljs-number">2</span>]), <span class="hljs-built_in">str</span>(movie[<span class="hljs-number">3</span>]),<span class="hljs-built_in">str</span>(movie[<span class="hljs-number">4</span>]), <span class="hljs-built_in">str</span>(movie[<span class="hljs-number">5</span>]), <span class="hljs-built_in">str</span>(movie[<span class="hljs-number">6</span>]), <span class="hljs-built_in">float</span>(movie[<span class="hljs-number">7</span>]),                                     <span class="hljs-built_in">int</span>(movie[<span class="hljs-number">8</span>]), <span class="hljs-built_in">str</span>(movie[<span class="hljs-number">9</span>]))<br>                cursor.execute(insertSQL)<br>            db.commit()<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;上传成功...&#x27;</span>)<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            <span class="hljs-built_in">print</span>(e)<br>            db.rollback()<br>        <span class="hljs-keyword">finally</span>:<br>            db.close()<br></code></pre></td></tr></table></figure>
+
+<p>完善此爬虫程序，执行即可抓取豆瓣电影Top250影评数据并实现数据持久化。</p>
+<h2 id="三、数据分析"><a href="#三、数据分析" class="headerlink" title="三、数据分析"></a>三、数据分析</h2><h4 id="1-数据清洗"><a href="#1-数据清洗" class="headerlink" title="1.数据清洗"></a>1.数据清洗</h4><h5 id="1-1-预览数据"><a href="#1-1-预览数据" class="headerlink" title="1.1 预览数据"></a>1.1 预览数据</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 查看数据基本信息</span><br>df = pd.read_csv(<span class="hljs-string">&#x27;douban_top250.csv&#x27;</span>, encoding=<span class="hljs-string">&#x27;utf-8-sig&#x27;</span>)<br>df.head()<br>df.info()<br></code></pre></td></tr></table></figure>
+
+<h5 id="1-2-重复值检查"><a href="#1-2-重复值检查" class="headerlink" title="1.2 重复值检查"></a>1.2 重复值检查</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">count=df.duplicated().value_counts()<br><span class="hljs-built_in">print</span>(count)<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-数据可视化"><a href="#2-数据可视化" class="headerlink" title="2.数据可视化"></a>2.数据可视化</h4><h5 id="2-1-电影制作国家-x2F-地区分析"><a href="#2-1-电影制作国家-x2F-地区分析" class="headerlink" title="2.1 电影制作国家&#x2F;地区分析"></a>2.1 电影制作国家&#x2F;地区分析</h5><p>有些电影由多个国家或地区参与制作。对于这种情况，可以采用split方法对每一项国家或地区数据进行切割，并将空值NaN替换为”0”，先按列计数，再按行汇总，由此统计数量。使用<strong>matplotlib.pyplot</strong>工具绘制排名统计直方图，使用<strong>wordcloud</strong>模块绘制词云图。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 国家地区排名</span><br>area_split = df[<span class="hljs-string">&#x27;制作国家/地区&#x27;</span>].<span class="hljs-built_in">str</span>.split(<span class="hljs-string">&#x27; &#x27;</span>).apply(pd.Series)<br>all_country = area_split.apply(pd.value_counts).fillna(<span class="hljs-string">&#x27;0&#x27;</span>)<br>all_country.columns = [<span class="hljs-string">&#x27;area1&#x27;</span>, <span class="hljs-string">&#x27;area2&#x27;</span>, <span class="hljs-string">&#x27;area3&#x27;</span>, <span class="hljs-string">&#x27;area4&#x27;</span>, <span class="hljs-string">&#x27;area5&#x27;</span>, <span class="hljs-string">&#x27;area6&#x27;</span>]<br>all_country[<span class="hljs-string">&#x27;area1&#x27;</span>] = all_country[<span class="hljs-string">&#x27;area1&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_country[<span class="hljs-string">&#x27;area2&#x27;</span>] = all_country[<span class="hljs-string">&#x27;area2&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_country[<span class="hljs-string">&#x27;area3&#x27;</span>] = all_country[<span class="hljs-string">&#x27;area3&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_country[<span class="hljs-string">&#x27;area4&#x27;</span>] = all_country[<span class="hljs-string">&#x27;area4&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_country[<span class="hljs-string">&#x27;area5&#x27;</span>] = all_country[<span class="hljs-string">&#x27;area5&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_country[<span class="hljs-string">&#x27;area6&#x27;</span>] = all_country[<span class="hljs-string">&#x27;area6&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_country[<span class="hljs-string">&#x27;all_counts&#x27;</span>] = all_country[<span class="hljs-string">&#x27;area1&#x27;</span>] + all_country[<span class="hljs-string">&#x27;area2&#x27;</span>] \<br>                            + all_country[<span class="hljs-string">&#x27;area3&#x27;</span>] + all_country[<span class="hljs-string">&#x27;area4&#x27;</span>] \<br>                            + all_country[<span class="hljs-string">&#x27;area5&#x27;</span>] + all_country[<span class="hljs-string">&#x27;area5&#x27;</span>]<br>all_country.sort_values([<span class="hljs-string">&#x27;all_counts&#x27;</span>], ascending=<span class="hljs-literal">False</span>)  <span class="hljs-comment"># 降序</span><br>country = pd.DataFrame(&#123;<span class="hljs-string">&#x27;制作国家/地区&#x27;</span>: all_country[<span class="hljs-string">&#x27;all_counts&#x27;</span>]&#125;)<br>country.sort_values(by=<span class="hljs-string">&#x27;制作国家/地区&#x27;</span>, ascending=<span class="hljs-literal">False</span>).plot(kind=<span class="hljs-string">&#x27;bar&#x27;</span>, figsize=(<span class="hljs-number">10</span>, <span class="hljs-number">7</span>))<br>plt.show()<br><span class="hljs-comment"># 绘制wordcloud</span><br>stopwords = <span class="hljs-built_in">set</span>(STOPWORDS)<br>stopwords.add(<span class="hljs-string">&quot;NaN&quot;</span>)<br>area_text = area_split.to_string(header=<span class="hljs-literal">False</span>, index=<span class="hljs-literal">False</span>)<br>WC_area = wordcloud.WordCloud(background_color=<span class="hljs-string">&#x27;white&#x27;</span>,<br>                              scale=<span class="hljs-number">1.5</span>,<br>                              stopwords=stopwords,<br>                              prefer_horizontal=<span class="hljs-number">1</span><br>                              ).generate(area_text)<br>plt.imshow(WC_area)<br>plt.axis(<span class="hljs-string">&quot;off&quot;</span>)<br>plt.show()<br></code></pre></td></tr></table></figure>
+
+<p>绘制结果如下：<img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_area.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_area.png"><img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_movie_area.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_movie_area.png"></p>
+<p>由数据可以看出，上榜数最多的国家是美国，中国大陆排名第六。</p>
+<h5 id="2-2-电影类型分析"><a href="#2-2-电影类型分析" class="headerlink" title="2.2 电影类型分析"></a>2.2 电影类型分析</h5><p>有些电影属于多种类型。比如排在第一位的《肖申克的救赎》既属于犯罪片也属于剧情片，而排在第二位的《霸王别姬》既属于剧情片又属于爱情片与同性片。对于这种情况，采用split方法对每一项国家或地区数据进行切割，并将空值NaN替换为”0”，先按列计数，再按行汇总，由此统计数量。使用<strong>matplotlib.pyplot</strong>模块绘制电影类型统计直方图，使用<strong>wordcloud</strong>模块绘制词云图。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 电影类型统计</span><br>all_type = df[<span class="hljs-string">&#x27;电影类别&#x27;</span>].<span class="hljs-built_in">str</span>.split(<span class="hljs-string">&#x27; &#x27;</span>).apply(pd.Series)<br>type_text = all_type.to_string(header=<span class="hljs-literal">False</span>, index=<span class="hljs-literal">False</span>)<br>all_type = all_type.apply(pd.value_counts).fillna(<span class="hljs-string">&#x27;0&#x27;</span>)<br>all_type.columns = [<span class="hljs-string">&#x27;type1&#x27;</span>, <span class="hljs-string">&#x27;type2&#x27;</span>, <span class="hljs-string">&#x27;type3&#x27;</span>, <span class="hljs-string">&#x27;type4&#x27;</span>, <span class="hljs-string">&#x27;type5&#x27;</span>]<br>all_type[<span class="hljs-string">&#x27;type1&#x27;</span>] = all_type[<span class="hljs-string">&#x27;type1&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_type[<span class="hljs-string">&#x27;type2&#x27;</span>] = all_type[<span class="hljs-string">&#x27;type2&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_type[<span class="hljs-string">&#x27;type3&#x27;</span>] = all_type[<span class="hljs-string">&#x27;type3&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_type[<span class="hljs-string">&#x27;type4&#x27;</span>] = all_type[<span class="hljs-string">&#x27;type4&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_type[<span class="hljs-string">&#x27;type5&#x27;</span>] = all_type[<span class="hljs-string">&#x27;type5&#x27;</span>].astype(<span class="hljs-built_in">int</span>)<br>all_type[<span class="hljs-string">&#x27;all_counts&#x27;</span>] = all_type[<span class="hljs-string">&#x27;type1&#x27;</span>] + all_type[<span class="hljs-string">&#x27;type2&#x27;</span>] \<br>                         + all_type[<span class="hljs-string">&#x27;type3&#x27;</span>] + all_type[<span class="hljs-string">&#x27;type4&#x27;</span>] + all_type[<span class="hljs-string">&#x27;type5&#x27;</span>]<br> <br>all_type = all_type.sort_values([<span class="hljs-string">&#x27;all_counts&#x27;</span>], ascending=<span class="hljs-literal">False</span>)<br>movie_type = pd.DataFrame(&#123;<span class="hljs-string">&#x27;数量&#x27;</span>: all_type[<span class="hljs-string">&#x27;all_counts&#x27;</span>]&#125;)<br><span class="hljs-built_in">print</span>(movie_type)<br>movie_type.sort_values(by=<span class="hljs-string">&#x27;数量&#x27;</span>, ascending=<span class="hljs-literal">False</span>).plot(kind=<span class="hljs-string">&#x27;bar&#x27;</span>, figsize=(<span class="hljs-number">13</span>, <span class="hljs-number">6</span>))<br>plt.show()<br><span class="hljs-comment"># 绘制wordcloud</span><br>stopwords = <span class="hljs-built_in">set</span>(STOPWORDS)<br>stopwords.add(<span class="hljs-string">&quot;NaN&quot;</span>)<br>WC_type = wordcloud.WordCloud(background_color=<span class="hljs-string">&#x27;white&#x27;</span>,<br>                              scale=<span class="hljs-number">1.5</span>,<br>                              stopwords=stopwords,<br>                              collocations=<span class="hljs-literal">False</span>,<br>                              prefer_horizontal=<span class="hljs-number">1</span><br>                              ).generate(type_text)<br>plt.imshow(WC_type)<br>plt.axis(<span class="hljs-string">&quot;off&quot;</span>)<br>plt.show()<br></code></pre></td></tr></table></figure>
+
+<p>绘制结果如下：<img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_type.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_type.png"><img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_movie_type.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_movie_type.png"></p>
+<p>由数据图可以明显看出，剧情片的上榜比例远远超过其他类型，而情色片、运动片等类型上榜数较少。</p>
+<h5 id="2-3-导演上榜次数分析"><a href="#2-3-导演上榜次数分析" class="headerlink" title="2.3 导演上榜次数分析"></a>2.3 导演上榜次数分析</h5><p>使用<strong>pandas</strong>模块提取数据，使用<strong>wordcloud</strong>模块绘制词云图。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 导演上榜次数</span><br>director = df[<span class="hljs-string">&#x27;导演&#x27;</span>].value_counts()<br>myDirector = pd.DataFrame(&#123;<span class="hljs-string">&#x27;name&#x27;</span>:director.index,<span class="hljs-string">&#x27;counts&#x27;</span>:director.values&#125;)<br><span class="hljs-built_in">print</span>(myDirector)<br><span class="hljs-comment"># 绘制wordcloud</span><br>Director=df[<span class="hljs-string">&#x27;导演&#x27;</span>].<span class="hljs-built_in">str</span>.split(<span class="hljs-string">&#x27; &#x27;</span>).apply(pd.Series)<br>stopwords = <span class="hljs-built_in">set</span>(STOPWORDS)<br>stopwords.add(<span class="hljs-string">&quot;NaN&quot;</span>)<br>director_text = Director.to_string(header=<span class="hljs-literal">False</span>, index=<span class="hljs-literal">False</span>)<br>WC_director= wordcloud.WordCloud(background_color=<span class="hljs-string">&#x27;white&#x27;</span>,<br>                              scale=<span class="hljs-number">1.5</span>,<br>                              stopwords=stopwords,<br>                              prefer_horizontal=<span class="hljs-number">1</span><br>                              ).generate(director_text)<br>plt.imshow(WC_director)<br>plt.axis(<span class="hljs-string">&quot;off&quot;</span>)<br>plt.show()<br></code></pre></td></tr></table></figure>
+
+<p>绘制结果如下：</p>
+<p><img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_director.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_director.png"></p>
+<p><img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_director.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/wc_director.png"></p>
+<p>排在前几名的都是耳熟能详的导演，如斯皮尔伯格、克里斯托弗诺兰与宫崎骏，上榜数量都为7部，而华人导演王家卫上榜数量为5部。  </p>
+<h5 id="2-4-评分与排名关系分析"><a href="#2-4-评分与排名关系分析" class="headerlink" title="2.4 评分与排名关系分析"></a>2.4 评分与排名关系分析</h5><p>使用<strong>pandas</strong>模块提取数据，使用<strong>matplotlib.pyplot</strong>模块绘制评分和排名关系散点图以及电影评分的分布图。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 评分和排名的关系散点图</span><br>plt.figure(figsize=(<span class="hljs-number">14</span>, <span class="hljs-number">6</span>))<br>plt.subplot(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>)<br>plt.scatter(df[<span class="hljs-string">&#x27;评分&#x27;</span>], df[<span class="hljs-string">&#x27;电影排名&#x27;</span>])<br>plt.xlabel(<span class="hljs-string">&#x27;评分&#x27;</span>)<br>plt.ylabel(<span class="hljs-string">&#x27;电影排名&#x27;</span>)<br>plt.gca().invert_yaxis()<br><span class="hljs-comment"># 评分数量直方图</span><br>plt.subplot(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">2</span>)<br>plt.hist(df[<span class="hljs-string">&#x27;评分&#x27;</span>], bins=<span class="hljs-number">14</span>)<br>plt.xlabel(<span class="hljs-string">&#x27;评分&#x27;</span>)<br>plt.ylabel(<span class="hljs-string">&#x27;出现次数&#x27;</span>)<br>plt.show()<br></code></pre></td></tr></table></figure>
+
+<p>绘制结果如下：<img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_score_number.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_score_number.png"></p>
+<p>由上图可以看出，电影的评分大多是集中在8.5-9.4之间。  </p>
+<h5 id="2-5-评分与参评人数关系分析"><a href="#2-5-评分与参评人数关系分析" class="headerlink" title="2.5 评分与参评人数关系分析"></a>2.5 评分与参评人数关系分析</h5><p>使用<strong>pandas</strong>模块提取数据，使用<strong>matplotlib.pyplot</strong>模块绘制参评人数与电影排名关系散点图以及参评人数频次图。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 评分与评价人数的关系散点图</span><br>plt.figure(figsize=(<span class="hljs-number">14</span>, <span class="hljs-number">6</span>))<br>plt.subplot(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>)<br>plt.scatter(df[<span class="hljs-string">&#x27;参评人数&#x27;</span>], df[<span class="hljs-string">&#x27;电影排名&#x27;</span>])<br>plt.xlabel(<span class="hljs-string">&#x27;参评人数&#x27;</span>)<br>plt.ylabel(<span class="hljs-string">&#x27;电影排名&#x27;</span>)<br>plt.gca().invert_yaxis()<br><span class="hljs-comment"># 评价人数直方图</span><br>plt.subplot(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">2</span>)<br>plt.hist(df[<span class="hljs-string">&#x27;参评人数&#x27;</span>], bins=<span class="hljs-number">14</span>)<br>plt.xlabel(<span class="hljs-string">&#x27;参评人数&#x27;</span>)<br>plt.ylabel(<span class="hljs-string">&#x27;出现次数&#x27;</span>)<br>plt.show()<br></code></pre></td></tr></table></figure>
+
+<p>绘制结果如下：</p>
+<p><img src="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_review_number.png" srcset="/img/loading.gif" lazyload alt="https://pic-1252881216.cos.ap-beijing.myqcloud.com/douban_top_250/movie_review_number.png"></p>
+<p>由统计图可以看出，电影排名与其参评人数基本呈正相关趋势，且参评人数主要分布在350000-900000人之间。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><p>综上分析，可以看出，中国观众对于电影的类型更认可剧情片和爱情片；对于电影的生产国家，更认可具有强大电影工业体系的美国；而对于该榜单中的电影而言，好电影会吸引更多的人来评价，而评价人数多的电影，质量也确实不错。或许榜单的意义就在于：让真正的好电影能通过排名，吸引更多人观看评价。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/data-analysis/" class="category-chain-item">data_analysis</a>
+  
+  
+
+      </span>
+    
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/spider/" class="category-chain-item">spider</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Python-%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90-%E7%88%AC%E8%99%AB/">#Python 数据分析 爬虫</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>基于Python的豆瓣影评数据爬取及分析</div>
+      <div>https://blog.xunpod.com/2019/10/26/基于Python的豆瓣影评数据爬取及分析/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Xunpod</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2019年10月26日</div>
+        </div>
+      
+      
+      <div class="license-meta-item">
+        <div>许可协议</div>
+        <div>
+          
+            
+            
+              <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+              <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                <i class="iconfont icon-by"></i>
+              </span>
+              </a>
+            
+          
+        </div>
+      </div>
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/11/13/Pycharm%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95/" title="Pycharm踩坑记录">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Pycharm踩坑记录</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a> ©2018-2022 blog.xunpod.com | </a>  <a>Powered by </a> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a>|</a> <a>Themed by </a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <a>|</a> <a>Deloyed on </a> <a href="https://pages.github.com//" target="_blank" rel="nofollow noopener"><span>Github page</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+    <!-- 备案信息 ICP for China -->
+    <div class="beian">
+  <span>
+    <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+      辽ICP备17015579号-8
+    </a>
+  </span>
+  
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      headingSelector : CONFIG.toc.headingSelector || 'h1,h2,h3,h4,h5,h6',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      collapseDepth   : CONFIG.toc.collapseDepth || 0,
+      scrollSmooth    : true,
+      headingsOffset  : -boardTop
+    });
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.10/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
